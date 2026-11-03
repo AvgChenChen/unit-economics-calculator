@@ -12,9 +12,20 @@ const FIELDS = ["price", "grossMargin", "monthlyChurn", "cac", "annualDiscount"]
 const PERCENT = new Set(["grossMargin", "monthlyChurn", "annualDiscount"]);
 
 const $ = (id) => document.getElementById(id);
-const money = (x) =>
-  Number.isFinite(x) ? `$${x.toLocaleString("en-CA", { maximumFractionDigits: x < 100 ? 2 : 0 })}` : "∞";
-const pct = (x) => `${(x * 100).toLocaleString("en-CA", { maximumFractionDigits: 1 })}%`;
+// Whole dollars from $100 up; below that, cents unless the amount is a whole number ($50, $67.50).
+const money = (x) => {
+  if (!Number.isFinite(x)) return "∞";
+  const cents = x < 100 && Math.round(x * 100) % 100 !== 0 ? 2 : 0;
+  return `$${x.toLocaleString("en-CA", { minimumFractionDigits: cents, maximumFractionDigits: cents })}`;
+};
+const pct = (x, digits = 1) => `${(x * 100).toLocaleString("en-CA", { maximumFractionDigits: digits })}%`;
+
+// A round step for chart gridlines: 1, 2 or 5 times a power of ten.
+function niceStep(max, lines = 4) {
+  const rough = max / lines;
+  const power = 10 ** Math.floor(Math.log10(rough));
+  return [1, 2, 5, 10].map((m) => m * power).find((step) => step >= rough);
+}
 const months = (n) => `${n.toLocaleString("en-CA", { maximumFractionDigits: 1 })} month${n === 1 ? "" : "s"}`;
 const ratioText = (r) => (Number.isFinite(r) ? `${r.toFixed(1)} : 1` : "∞");
 
@@ -50,12 +61,13 @@ function drawChart(result, cac) {
   const height = 260;
   const pad = { left: 60, right: 16, top: 16, bottom: 32 };
   const curve = result.curve;
-  const maxY = Math.max(cac, result.ltv, curve.at(-1)) * 1.1 || 1;
+  const step = niceStep(Math.max(cac, result.ltv, curve.at(-1)) * 1.1 || 1);
+  const maxY = step * Math.ceil((Math.max(cac, result.ltv, curve.at(-1)) * 1.1 || 1) / step);
   const x = (m) => pad.left + (m / (curve.length - 1)) * (width - pad.left - pad.right);
   const y = (v) => height - pad.bottom - (v / maxY) * (height - pad.top - pad.bottom);
   const path = curve.map((v, m) => `${m ? "L" : "M"}${x(m).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
 
-  const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => f * maxY);
+  const ticks = Array.from({ length: Math.round(maxY / step) + 1 }, (_, i) => i * step);
   const grid = ticks
     .map(
       (v) =>
@@ -101,7 +113,7 @@ function drawSensitivity(inputs) {
   const rows = grid
     .map(
       (row, i) =>
-        `<tr><th>${pct(churns[i])}</th>${row
+        `<tr><th>${pct(churns[i], 2)}</th>${row
           .map(
             (r, j) =>
               `<td class="${level(r)}${i === 2 && j === 2 ? " current" : ""}">${Number.isFinite(r) ? r.toFixed(1) : "∞"}</td>`,
