@@ -1,0 +1,12 @@
+{
+  "name": "unit-economics-calculator",
+  "version": "0.1.0",
+  "description": "What a customer is worth, what it costs to win one, and how long it takes to earn that cost back.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "serve": "python3 -m http.server 8000"
+  }
+}

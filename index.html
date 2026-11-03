@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Unit Economics Calculator</title>
+    <meta
+      name="description"
+      content="What a subscription customer is worth, what it costs to win one, and how long it takes to earn that cost back."
+    />
+    <link rel="stylesheet" href="src/styles.css" />
+    <script type="module" src="src/app.js"></script>
+  </head>
+  <body>
+    <header class="page-header">
+      <h1>Unit economics calculator</h1>
+      <p>
+        For a subscription business: what one customer is worth, what it costs to win one, and how long it takes to
+        earn that cost back.
+      </p>
+    </header>
+
+    <main class="layout">
+      <form id="inputs" class="panel" novalidate>
+        <h2>Your numbers</h2>
+
+        <div class="examples" role="group" aria-label="Load an example">
+          <span>Try an example:</span>
+          <button type="button" data-example="software">Software</button>
+          <button type="button" data-example="mealkit">Meal kit</button>
+          <button type="button" data-example="fitness">Fitness app</button>
+        </div>
+        <p class="hint">The examples use made-up numbers.</p>
+
+        <label class="field">
+          <span class="label">Price per customer, per month</span>
+          <span class="input-wrap prefix" data-unit="$"><input id="price" name="price" type="number" min="0" step="any" inputmode="decimal" /></span>
+          <span class="hint">Average revenue per paying customer each month.</span>
+        </label>
+
+        <label class="field">
+          <span class="label">Gross margin</span>
+          <span class="input-wrap suffix" data-unit="%"><input id="grossMargin" name="grossMargin" type="number" min="0" max="100" step="any" inputmode="decimal" /></span>
+          <span class="hint">Share of revenue left after the direct cost of serving the customer.</span>
+        </label>
+
+        <label class="field">
+          <span class="label">Monthly churn</span>
+          <span class="input-wrap suffix" data-unit="%"><input id="monthlyChurn" name="monthlyChurn" type="number" min="0" max="100" step="any" inputmode="decimal" /></span>
+          <span class="hint">Share of customers who cancel each month.</span>
+        </label>
+
+        <label class="field">
+          <span class="label">Cost to win a customer (CAC)</span>
+          <span class="input-wrap prefix" data-unit="$"><input id="cac" name="cac" type="number" min="0" step="any" inputmode="decimal" /></span>
+          <span class="hint">Sales and marketing spend per new customer.</span>
+        </label>
+
+        <details class="helper">
+          <summary>Work out CAC from total spend</summary>
+          <div class="helper-row">
+            <label class="field">
+              <span class="label">Sales and marketing spend</span>
+              <span class="input-wrap prefix" data-unit="$"><input id="spend" type="number" min="0" step="any" inputmode="decimal" /></span>
+            </label>
+            <label class="field">
+              <span class="label">New customers won</span>
+              <span class="input-wrap"><input id="newCustomers" type="number" min="0" step="1" inputmode="numeric" /></span>
+            </label>
+          </div>
+          <button type="button" id="useSpend">Use this CAC</button>
+          <p class="hint" id="spendResult" aria-live="polite"></p>
+        </details>
+
+        <details class="helper">
+          <summary>Advanced: discount future profit</summary>
+          <label class="field">
+            <span class="label">Annual discount rate</span>
+            <span class="input-wrap suffix" data-unit="%"><input id="annualDiscount" name="annualDiscount" type="number" min="0" max="100" step="any" inputmode="decimal" /></span>
+            <span class="hint">A dollar next year is worth less than a dollar today. 0% ignores this.</span>
+          </label>
+        </details>
+
+        <ul id="errors" class="errors" aria-live="polite"></ul>
+      </form>
+
+      <section class="results" aria-live="polite" aria-label="Results">
+        <div id="verdict" class="verdict">
+          <div class="ratio"><span id="ratio">–</span><span class="ratio-label">LTV : CAC</span></div>
+          <p id="verdictText"></p>
+        </div>
+
+        <div class="cards">
+          <div class="card">
+            <span class="card-label">Lifetime value (LTV)</span>
+            <span class="card-value" id="ltv">–</span>
+            <span class="card-note" id="ltvNote"></span>
+          </div>
+          <div class="card">
+            <span class="card-label">Cost to win (CAC)</span>
+            <span class="card-value" id="cacOut">–</span>
+            <span class="card-note">What you pay up front.</span>
+          </div>
+          <div class="card">
+            <span class="card-label">Payback</span>
+            <span class="card-value" id="payback">–</span>
+            <span class="card-note" id="paybackNote"></span>
+          </div>
+          <div class="card">
+            <span class="card-label">Average customer stays</span>
+            <span class="card-value" id="lifetime">–</span>
+            <span class="card-note">1 ÷ monthly churn.</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Earning back the cost of one customer</h2>
+          <p class="hint">
+            Expected gross profit from one new customer, added up month by month, allowing for the chance they cancel.
+          </p>
+          <div id="chart" class="chart"></div>
+        </div>
+
+        <div class="panel">
+          <h2>To reach 3 : 1, you'd need one of these</h2>
+          <ul id="levers" class="levers"></ul>
+        </div>
+
+        <div class="panel">
+          <h2>What if price or churn changed?</h2>
+          <p class="hint">LTV : CAC for each combination. Your current numbers are outlined.</p>
+          <div class="table-wrap"><table id="sensitivity"></table></div>
+        </div>
+
+        <details class="panel method">
+          <summary><h2>How it's calculated</h2></summary>
+          <ul>
+            <li><strong>Monthly gross profit</strong> = price × gross margin.</li>
+            <li>
+              <strong>Lifetime value</strong> = monthly gross profit ÷ (monthly churn + monthly discount rate). With no
+              discounting, that's monthly profit × the average lifetime of 1 ÷ churn months. It's the exact total of
+              every future month's expected profit.
+            </li>
+            <li>
+              <strong>Payback</strong> is the first month in which the expected profit so far covers CAC. It allows for
+              customers who cancel along the way, so it's longer than CAC ÷ monthly profit.
+            </li>
+            <li>
+              <strong>3 : 1</strong> is a common rule of thumb for subscription businesses, not a law. A business can
+              be healthy below it or struggling above it.
+            </li>
+            <li>
+              <strong>Assumptions:</strong> churn is the same every month, every customer pays the same price, and the
+              customer pays for their first month.
+            </li>
+          </ul>
+        </details>
+      </section>
+    </main>
+
+    <footer class="page-footer">
+      <p>
+        Runs entirely in your browser; nothing you type is sent anywhere. An educational tool, not financial advice.
+        <a href="https://github.com/AvgChenChen/unit-economics-calculator">Source on GitHub</a>.
+      </p>
+    </footer>
+  </body>
+</html>
