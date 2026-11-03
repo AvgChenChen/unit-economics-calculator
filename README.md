@@ -1,5 +1,7 @@
 # Unit economics calculator
 
+**Try it: [avgchenchen.github.io/unit-economics-calculator](https://avgchenchen.github.io/unit-economics-calculator/)**
+
 A calculator for subscription businesses. Enter your price, gross margin, churn and what it costs
 to win a customer, and it tells you:
 
