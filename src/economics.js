@@ -17,7 +17,7 @@ export function monthlyRate(annual) {
 
 /** Cost to win one customer, from total sales and marketing spend and the customers it won. */
 export function cacFromSpend(spend, newCustomers) {
-  if (!(newCustomers > 0)) return null;
+  if (!Number.isFinite(spend) || spend < 0 || !Number.isSafeInteger(newCustomers) || newCustomers <= 0) return null;
   return spend / newCustomers;
 }
 

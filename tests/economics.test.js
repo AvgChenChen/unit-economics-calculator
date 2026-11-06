@@ -107,3 +107,13 @@ test("sensitivity grid: rows are churn, columns are price", () => {
   close(grid[0][0], 1.6); // $32 / 0.05 = $640, / 400
   close(grid[1][1], 1); // $40 / 0.10 = $400, / 400
 });
+
+test("CAC inputs must be finite, non-negative spend and a positive whole customer count", () => {
+  assert.equal(cacFromSpend(0, 5), 0);
+  for (const spend of [-1, Number.NaN, Infinity, -Infinity]) {
+    assert.equal(cacFromSpend(spend, 5), null);
+  }
+  for (const customers of [0, -1, 1.5, Number.NaN, Infinity]) {
+    assert.equal(cacFromSpend(100, customers), null);
+  }
+});

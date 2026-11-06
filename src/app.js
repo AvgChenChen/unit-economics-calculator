@@ -180,7 +180,7 @@ function start() {
   $("useSpend").addEventListener("click", () => {
     const cac = cacFromSpend(Number($("spend").value), Number($("newCustomers").value));
     if (cac === null) {
-      $("spendResult").textContent = "Enter a number of new customers above 0.";
+      $("spendResult").textContent = "Enter non-negative spend and a positive whole number of customers.";
       return;
     }
     $("cac").value = Math.round(cac * 100) / 100;
