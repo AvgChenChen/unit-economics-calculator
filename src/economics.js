@@ -12,7 +12,7 @@ const MAX_MONTHS = 600; // 50 years: beyond this, payback is reported as "never"
 
 /** Monthly rate equivalent to an annual discount rate: (1 + annual)^(1/12) - 1. */
 export function monthlyRate(annual) {
-  return (1 + annual) ** (1 / 12) - 1;
+  return Math.expm1(Math.log1p(annual) / 12);
 }
 
 /** Cost to win one customer, from total sales and marketing spend and the customers it won. */
@@ -62,10 +62,12 @@ export function lifetimeValue({ price, grossMargin, monthlyChurn, annualDiscount
  */
 export function paybackMonths(inputs) {
   if (inputs.cac === 0) return 0;
+  // With any surviving customers, the infinite series only approaches its limit.
+  if (inputs.monthlyChurn < 1 && inputs.cac >= lifetimeValue(inputs)) return null;
   let total = 0;
   for (let t = 1; t <= MAX_MONTHS; t += 1) {
     total += expectedProfitInMonth(t, inputs);
-    if (total >= inputs.cac - 1e-9) return t;
+    if (total >= inputs.cac) return t;
   }
   return null;
 }
