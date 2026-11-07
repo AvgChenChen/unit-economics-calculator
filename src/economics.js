@@ -62,10 +62,12 @@ export function lifetimeValue({ price, grossMargin, monthlyChurn, annualDiscount
  */
 export function paybackMonths(inputs) {
   if (inputs.cac === 0) return 0;
+  // With any surviving customers, the infinite series only approaches its limit.
+  if (inputs.monthlyChurn < 1 && inputs.cac >= lifetimeValue(inputs)) return null;
   let total = 0;
   for (let t = 1; t <= MAX_MONTHS; t += 1) {
     total += expectedProfitInMonth(t, inputs);
-    if (total >= inputs.cac - 1e-9) return t;
+    if (total >= inputs.cac) return t;
   }
   return null;
 }
