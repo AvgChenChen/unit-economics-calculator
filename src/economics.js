@@ -12,7 +12,7 @@ const MAX_MONTHS = 600; // 50 years: beyond this, payback is reported as "never"
 
 /** Monthly rate equivalent to an annual discount rate: (1 + annual)^(1/12) - 1. */
 export function monthlyRate(annual) {
-  return (1 + annual) ** (1 / 12) - 1;
+  return Math.expm1(Math.log1p(annual) / 12);
 }
 
 /** Cost to win one customer, from total sales and marketing spend and the customers it won. */
